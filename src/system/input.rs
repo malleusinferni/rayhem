@@ -19,7 +19,7 @@ impl System<Ctx> for MovePlayer {
         });
 
         for (_, pos) in (&player, &mut pos).iter() {
-            let turn_speed = Radf::new((10.0f32).to_radians());
+            let turn_speed = Radf::new((0.5f32).to_radians());
             match ctx.turning {
                 Turning::Left => pos.1 -= turn_speed,
                 Turning::Right => pos.1 += turn_speed,

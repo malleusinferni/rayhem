@@ -147,6 +147,8 @@ impl System<Ctx> for DisplaySys {
                     high_y: wall_height,
                     low_y: -wall_height,
                 });
+
+                break;
             }
         }
 

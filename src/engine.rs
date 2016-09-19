@@ -18,6 +18,7 @@ pub fn new<'r>() -> Engine<'r> {
         .unwrap();
 
     let renderer = window.renderer()
+        .present_vsync()
         .build()
         .unwrap();
 
@@ -77,8 +78,6 @@ impl Ctx {
     }
 
     fn update(&mut self, event_pump: &mut EventPump) {
-        self.turning = Turning::Straight;
-
         for event in event_pump.poll_iter() {
             use sdl2::event::Event;
             use sdl2::keyboard::Keycode;
@@ -90,6 +89,18 @@ impl Ctx {
                     Keycode::Q => { self.should_quit = true; },
                     Keycode::Left => { self.turning = Turning::Left; },
                     Keycode::Right => { self.turning = Turning::Right; },
+                    _ => (),
+                },
+
+                Event::KeyUp { keycode: Some(k), .. } => match k {
+                    Keycode::Left => if let Turning::Left = self.turning {
+                        self.turning = Turning::Straight;
+                    },
+
+                    Keycode::Right => if let Turning::Right = self.turning {
+                        self.turning = Turning::Straight;
+                    },
+
                     _ => (),
                 },
 
