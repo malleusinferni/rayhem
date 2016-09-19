@@ -47,6 +47,7 @@ pub fn new<'r>() -> Engine<'r> {
 
     let (display_agent, display_sys) = DisplaySys::new(renderer);
 
+    planner.add_system(MovePlayer{}, "Input", 3);
     planner.add_system(MoveCamera{}, "Camera", 2);
     planner.add_system(display_sys, "Display", 1);
 
@@ -55,7 +56,7 @@ pub fn new<'r>() -> Engine<'r> {
     Engine {
         sdl: sdl,
         ctx: ctx,
-        input: event_pump,
+        event_pump: event_pump,
         planner: planner,
         display: display_agent,
     }
@@ -63,30 +64,53 @@ pub fn new<'r>() -> Engine<'r> {
 
 #[derive(Clone)]
 pub struct Ctx {
-    // Nothing
+    pub should_quit: bool,
+    pub turning: Turning,
 }
 
 impl Ctx {
-    fn new() -> Self { Ctx { } }
+    fn new() -> Self {
+        Ctx {
+            should_quit: false,
+            turning: Turning::Straight,
+        }
+    }
 
-    fn update(&mut self) {
-        // Do nothing
+    fn update(&mut self, event_pump: &mut EventPump) {
+        self.turning = Turning::Straight;
+
+        for event in event_pump.poll_iter() {
+            use sdl2::event::Event;
+            use sdl2::keyboard::Keycode;
+
+            match event {
+                Event::Quit { .. } => { self.should_quit = true; },
+
+                Event::KeyDown { keycode: Some(k), .. } => match k {
+                    Keycode::Q => { self.should_quit = true; },
+                    Keycode::Left => { self.turning = Turning::Left; },
+                    Keycode::Right => { self.turning = Turning::Right; },
+                    _ => (),
+                },
+
+                _ => (),
+            }
+        }
     }
 }
 
 pub struct Engine<'r> {
     sdl: Sdl,
     ctx: Ctx,
-    input: EventPump,
+    event_pump: EventPump,
     planner: Planner<Ctx>,
     display: DisplayAgent<'r>,
 }
 
 impl<'r> Engine<'r> {
     pub fn run(&mut self) {
-        for _ in 0 .. 180 {
-            self.ctx.update();
-            let _events = self.input.poll_iter().count();
+        while !self.ctx.should_quit {
+            self.ctx.update(&mut self.event_pump);
             self.planner.dispatch(self.ctx.clone());
             self.display.draw();
         }
