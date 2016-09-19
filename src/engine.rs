@@ -26,12 +26,20 @@ pub fn new<'r>() -> Engine<'r> {
         use resource::*;
 
         let mut world = specs::World::new();
+
         world.register::<Pos3D>();
         world.register::<Sprite3D>();
         world.register::<Billboard>();
         world.register::<IsPlayer>();
+
         world.add_resource(Camera3D::new(Vec2u::new(640, 480)));
         world.add_resource(LevelMap::new());
+
+        world.create_now()
+            .with(Pos3D::new(13.0, 5.0, 6.0, 90.0))
+            .with(IsPlayer {})
+            .build();
+
         Planner::new(world, 4)
     };
 
@@ -39,6 +47,7 @@ pub fn new<'r>() -> Engine<'r> {
 
     let (display_agent, display_sys) = DisplaySys::new(renderer);
 
+    planner.add_system(MoveCamera{}, "Camera", 2);
     planner.add_system(display_sys, "Display", 1);
 
     let ctx = Ctx::new();

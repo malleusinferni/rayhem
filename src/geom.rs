@@ -56,7 +56,7 @@ pub mod dda {
         }
     }
 
-    pub fn horizontal(src: Vec2f, dir: Vec2f, grid_size: f32) -> Iter {
+    fn horizontal(src: Vec2f, dir: Vec2f, grid_size: f32) -> Iter {
         use cgmath::prelude::*;
 
         let slope = dir.y / dir.x;
@@ -77,7 +77,7 @@ pub mod dda {
         }
     }
 
-    pub fn vertical(src: Vec2f, dir: Vec2f, grid_size: f32) -> Iter {
+    fn vertical(src: Vec2f, dir: Vec2f, grid_size: f32) -> Iter {
         let flip = |v: Vec2f| { Vec2f::new(v.y, v.x) };
         let h = horizontal(flip(src), flip(dir), grid_size);
 

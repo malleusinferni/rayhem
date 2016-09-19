@@ -14,6 +14,14 @@ use resource::*;
 
 struct DisplayList {
     bg: Color,
+    walls: Vec<WallSlice>,
+}
+
+struct WallSlice {
+    texid: TextureID,
+    camera_z: f32,
+    high_y: i16,
+    low_y: i16,
 }
 
 pub struct DisplaySys {
@@ -58,6 +66,8 @@ impl DisplaySys {
 
         let mut textures = HashMap::new();
         textures.insert(TextureID(0), Color::RGB(0x00, 0x7f, 0x1f));
+        textures.insert(TextureID(1), Color::RGB(0x7f, 0x3f, 0x1f));
+        textures.insert(TextureID(2), Color::RGB(0x3f, 0x3f, 0x3f));
 
         let agent = DisplayAgent {
             inbox: agent_in,
@@ -95,10 +105,10 @@ impl System<Ctx> for DisplaySys {
         let player_xy = camera.pos.truncate();
 
         for (x, ray) in camera.scatter_rays() {
-            let mut prev = match level.sector_to_draw(player_xy + ray.dir) {
-                Some(sector) => sector,
-                None => continue,
-            };
+            //let mut prev = match level.sector_to_draw(player_xy + ray.dir) {
+            //    Some(sector) => sector,
+            //    None => continue,
+            //};
 
             for hit in ray.cast(level.grid_size) {
                 use geom::dda::RayHit;
@@ -107,10 +117,25 @@ impl System<Ctx> for DisplaySys {
 
                 if hit.toi > 1000.0 { break; }
 
-                let next = match level.sector_to_draw(hit.poi) {
+                let next: Sector = match level.sector_to_draw(&hit) {
                     Some(sector) => sector,
                     None => break,
                 };
+
+                if next.floor_height <= 0 { continue; }
+
+                // FIXME: Correct projection
+                let z = hit.toi;
+
+                // Assume current floor height is 0
+                let wall_height = (next.floor_height as f32 / z) as i16;
+
+                manifest.walls.push(WallSlice {
+                    texid: next.texid,
+                    camera_z: z,
+                    high_y: wall_height,
+                    low_y: -wall_height,
+                });
             }
         }
 
@@ -130,11 +155,24 @@ impl<'r> DisplayAgent<'r> {
         self.renderer.set_draw_color(manifest.bg);
         self.renderer.clear();
 
-        //for wall in manifest.walls.drain(..) {
-            // TODO
-        //}
+        let camera_y = (self.resolution.y / 2) as i32;
 
-        //let camera_y = (self.resolution.y / 2) as i32;
+        for (x, wall) in manifest.walls.drain(..).enumerate() {
+            let x = x as i32;
+
+            let color = match self.textures.get(&wall.texid) {
+                Some(c) => c, None => continue,
+            };
+
+            self.renderer.set_draw_color(*color);
+            let high_y = camera_y - wall.high_y as i32;
+            let low_y = camera_y - wall.low_y as i32;
+            let width = 1;
+            let height = (low_y - high_y).abs() as u32;
+
+            let screen_rect = Rect::new(x, high_y, width, height);
+            self.renderer.draw_rect(screen_rect).unwrap();
+        }
 
         //for billboard in manifest.billboards.drain(..) {
         //    self.renderer.set_draw_color(billboard.texid.0);
@@ -152,6 +190,7 @@ impl DisplayList {
     fn new(resolution: Vec2u) -> Self {
         DisplayList {
             bg: Color::RGB(0x3f, 0x7f, 0xff),
+            walls: Vec::with_capacity(resolution.x as usize),
         }
     }
 }
@@ -211,14 +250,20 @@ impl Iterator for XRayIter {
     }
 }
 
-struct SectorToDraw {
-    sector: Sector,
-    poi: Vec2f,
-}
+use geom::dda::RayHit;
 
 impl LevelMap {
     #[inline]
-    fn sector_to_draw(&self, poi: Vec2f) -> Option<SectorToDraw> {
+    fn sector_to_draw(&self, hit: &RayHit) -> Option<Sector> {
+        let offset = match hit.normal {
+            Cardinal::North => Vec2f::new(0.0, 0.5),
+            Cardinal::South => Vec2f::new(0.0, -0.5),
+            Cardinal::East => Vec2f::new(0.5, 0.0),
+            Cardinal::West => Vec2f::new(-0.5, 0.0),
+        };
+
+        let poi: Vec2f = hit.poi + offset;
+
         let coords: Vec2i = (poi / self.grid_size).cast();
         // FIXME: Subtract chunk root
 
@@ -228,11 +273,6 @@ impl LevelMap {
         let y = coords.y as usize;
         let x = coords.x as usize;
 
-        Some({
-            SectorToDraw {
-                sector: self.chunks[0].sectors[y][x],
-                poi: poi,
-            }
-        })
+        Some(self.chunks[0].sectors[y][x])
     }
 }

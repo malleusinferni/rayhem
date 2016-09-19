@@ -43,3 +43,11 @@ impl Default for TextureID {
         TextureID(0)
     }
 }
+
+impl Pos3D {
+    pub fn new(x: f32, y: f32, z: f32, deg: f32) -> Self {
+        let pos = Vec3f::new(x, y, z);
+        let yaw = Radf::new(deg.to_radians());
+        Pos3D(pos, yaw)
+    }
+}
