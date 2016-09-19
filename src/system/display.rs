@@ -22,6 +22,7 @@ struct WallSlice {
     camera_z: f32,
     high_y: i16,
     low_y: i16,
+    x: u32,
 }
 
 pub struct DisplaySys {
@@ -149,6 +150,7 @@ impl System<Ctx> for DisplaySys {
                     camera_z: z,
                     high_y: wall_height,
                     low_y: -wall_height,
+                    x: x,
                 });
 
                 break;
@@ -173,8 +175,8 @@ impl<'r> DisplayAgent<'r> {
 
         let camera_y = (self.resolution.y / 2) as i32;
 
-        for (x, wall) in manifest.walls.drain(..).enumerate() {
-            let x = x as i32;
+        for wall in manifest.walls.drain(..) {
+            let x = wall.x as i32;
 
             let color = match self.textures.get(&wall.texid) {
                 Some(c) => c, None => continue,
