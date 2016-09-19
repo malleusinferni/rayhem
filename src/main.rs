@@ -3,6 +3,7 @@ extern crate rand;
 extern crate sdl2;
 extern crate sdl2_image;
 extern crate specs;
+extern crate time;
 
 pub mod geom;
 pub mod engine;

@@ -8,6 +8,9 @@ pub use geom::*;
 pub struct Pos3D(pub Vec3f, pub Radf);
 
 #[derive(Clone, Debug)]
+pub struct Vel3D(pub Vec3f);
+
+#[derive(Clone, Debug)]
 pub struct Sprite3D {
     // Empty for now
 }
@@ -31,6 +34,7 @@ pub struct Billboard {
 pub struct IsPlayer;
 
 impl Component for Pos3D { type Storage = VecStorage<Pos3D>; }
+impl Component for Vel3D { type Storage = VecStorage<Vel3D>; }
 impl Component for Sprite3D { type Storage = VecStorage<Sprite3D>; }
 impl Component for Billboard { type Storage = HashMapStorage<Billboard>; }
 impl Component for IsPlayer { type Storage = NullStorage<IsPlayer>; }
@@ -49,5 +53,11 @@ impl Pos3D {
         let pos = Vec3f::new(x, y, z);
         let yaw = Radf::new(deg.to_radians());
         Pos3D(pos, yaw)
+    }
+}
+
+impl Vel3D {
+    pub fn new() -> Self {
+        Vel3D(Vec3f::new(0.0, 0.0, 0.0))
     }
 }

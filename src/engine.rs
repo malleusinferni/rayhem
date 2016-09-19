@@ -17,6 +17,8 @@ pub fn new<'r>() -> Engine<'r> {
         .build()
         .unwrap();
 
+    sdl.mouse().set_relative_mouse_mode(true);
+
     let renderer = window.renderer()
         .present_vsync()
         .build()
@@ -29,6 +31,7 @@ pub fn new<'r>() -> Engine<'r> {
         let mut world = specs::World::new();
 
         world.register::<Pos3D>();
+        world.register::<Vel3D>();
         world.register::<Sprite3D>();
         world.register::<Billboard>();
         world.register::<IsPlayer>();
@@ -38,6 +41,7 @@ pub fn new<'r>() -> Engine<'r> {
 
         world.create_now()
             .with(Pos3D::new(13.0, 5.0, 6.0, 90.0))
+            .with(Vel3D::new())
             .with(IsPlayer {})
             .build();
 
@@ -48,7 +52,8 @@ pub fn new<'r>() -> Engine<'r> {
 
     let (display_agent, display_sys) = DisplaySys::new(renderer);
 
-    planner.add_system(MovePlayer{}, "Input", 3);
+    planner.add_system(MovePlayer{}, "Input", 4);
+    planner.add_system(ApplyVelocity{}, "Movement", 3);
     planner.add_system(MoveCamera{}, "Camera", 2);
     planner.add_system(display_sys, "Display", 1);
 
@@ -66,20 +71,32 @@ pub fn new<'r>() -> Engine<'r> {
 #[derive(Clone)]
 pub struct Ctx {
     pub should_quit: bool,
-    pub turning: Turning,
+    pub turn_amount: f32,
     pub walking: bool,
+
+    pub elapsed: f64,
+    pub began: f64,
+    pub dt: f64,
 }
 
 impl Ctx {
     fn new() -> Self {
+        use time;
+
         Ctx {
             should_quit: false,
-            turning: Turning::Straight,
+            turn_amount: 0.0,
             walking: false,
+
+            elapsed: 0.0,
+            began: time::precise_time_s(),
+            dt: 0.0,
         }
     }
 
     fn update(&mut self, event_pump: &mut EventPump) {
+        self.turn_amount = 0.0;
+
         for event in event_pump.poll_iter() {
             use sdl2::event::Event;
             use sdl2::keyboard::Keycode;
@@ -93,6 +110,11 @@ impl Ctx {
                     _ => (),
                 },
 
+                Event::MouseMotion { xrel, yrel, .. } => {
+                    let _ = yrel; // TODO: Implement vlook
+                    self.turn_amount += xrel as f32;
+                },
+
                 _ => (),
             }
         }
@@ -101,17 +123,23 @@ impl Ctx {
 
         let kb = event_pump.keyboard_state();
 
-        self.turning = {
-            let left = kb.is_scancode_pressed(Scancode::Left);
-            let right = kb.is_scancode_pressed(Scancode::Right);
-            match (left, right) {
-                (true, false) => Turning::Left,
-                (false, true) => Turning::Right,
-                _ => Turning::Straight,
-            }
-        };
+        //self.turning = {
+        //    let left = kb.is_scancode_pressed(Scancode::Left);
+        //    let right = kb.is_scancode_pressed(Scancode::Right);
+        //    match (left, right) {
+        //        (true, false) => Turning::Left,
+        //        (false, true) => Turning::Right,
+        //        _ => Turning::Straight,
+        //    }
+        //};
 
         self.walking = kb.is_scancode_pressed(Scancode::W);
+
+        use time;
+
+        let elapsed = time::precise_time_s() - self.began;
+        self.dt = elapsed - self.elapsed;
+        self.elapsed = elapsed;
     }
 }
 

@@ -54,7 +54,7 @@ impl DisplaySys {
             // until you get an area within the desired range
             Vec2u::from(match (width / divisor, height / divisor) {
                 (16, 9) => (400, 225),
-                (8, 5) => (360, 225),
+                (8, 5) => (720, 450),
                 (4, 3) => (320, 240),
                 _ => unimplemented!(),
             })
@@ -136,7 +136,7 @@ impl System<Ctx> for DisplaySys {
                     }
                 };
 
-                if next.floor_height <= 0 { continue; }
+                if next.floor_height <= prev.floor_height { continue; }
 
                 // FIXME: Correct projection
                 let z = hit.toi;
