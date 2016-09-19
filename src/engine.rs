@@ -67,6 +67,7 @@ pub fn new<'r>() -> Engine<'r> {
 pub struct Ctx {
     pub should_quit: bool,
     pub turning: Turning,
+    pub walking: bool,
 }
 
 impl Ctx {
@@ -74,6 +75,7 @@ impl Ctx {
         Ctx {
             should_quit: false,
             turning: Turning::Straight,
+            walking: false,
         }
     }
 
@@ -87,19 +89,6 @@ impl Ctx {
 
                 Event::KeyDown { keycode: Some(k), .. } => match k {
                     Keycode::Q => { self.should_quit = true; },
-                    Keycode::Left => { self.turning = Turning::Left; },
-                    Keycode::Right => { self.turning = Turning::Right; },
-                    _ => (),
-                },
-
-                Event::KeyUp { keycode: Some(k), .. } => match k {
-                    Keycode::Left => if let Turning::Left = self.turning {
-                        self.turning = Turning::Straight;
-                    },
-
-                    Keycode::Right => if let Turning::Right = self.turning {
-                        self.turning = Turning::Straight;
-                    },
 
                     _ => (),
                 },
@@ -107,6 +96,22 @@ impl Ctx {
                 _ => (),
             }
         }
+
+        use sdl2::keyboard::Scancode;
+
+        let kb = event_pump.keyboard_state();
+
+        self.turning = {
+            let left = kb.is_scancode_pressed(Scancode::Left);
+            let right = kb.is_scancode_pressed(Scancode::Right);
+            match (left, right) {
+                (true, false) => Turning::Left,
+                (false, true) => Turning::Right,
+                _ => Turning::Straight,
+            }
+        };
+
+        self.walking = kb.is_scancode_pressed(Scancode::W);
     }
 }
 

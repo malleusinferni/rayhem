@@ -65,9 +65,11 @@ impl DisplaySys {
         println!("Using resolution: {:?}", desired_res);
 
         let mut textures = HashMap::new();
-        textures.insert(TextureID(0), Color::RGB(0x00, 0x7f, 0x1f));
+        textures.insert(TextureID(0), Color::RGB(0x00, 0x00, 0x00));
         textures.insert(TextureID(1), Color::RGB(0x7f, 0x3f, 0x1f));
-        textures.insert(TextureID(2), Color::RGB(0x3f, 0x3f, 0x3f));
+        textures.insert(TextureID(2), Color::RGB(0x00, 0xbf, 0x1f));
+        textures.insert(TextureID(3), Color::RGB(0xbf, 0xbf, 0x1f));
+        textures.insert(TextureID(4), Color::RGB(0xbf, 0xbf, 0xbf));
 
         let agent = DisplayAgent {
             inbox: agent_in,
@@ -104,6 +106,8 @@ impl System<Ctx> for DisplaySys {
 
         let player_xy = camera.pos.truncate(); // Vec3f to Vec2f
 
+        let hf = camera.dim.y as f32 / 8.0;
+
         for (x, ray) in camera.scatter_rays() {
             let mut prev = match level.sector_to_draw(player_xy) {
                 Some(sector) => sector,
@@ -135,11 +139,10 @@ impl System<Ctx> for DisplaySys {
 
                 // FIXME: Correct projection
                 let z = hit.toi;
-
-                let elevation = next.floor_height as f32 * level.grid_size;
+                let sector_height = next.floor_height as f32 * hf;
 
                 // Assume current floor height is 0
-                let wall_height = (elevation / z) as i16;
+                let wall_height = (sector_height / z) as i16;
 
                 manifest.walls.push(WallSlice {
                     texid: next.texid,
@@ -235,7 +238,7 @@ impl Camera3D {
             width: self.dim.x,
             src: self.pos.truncate().cast(),
             dir: rot.rotate_vector(Vec2f::new(1.0, 0.0)),
-            right: rot.rotate_vector(Vec2f::new(0.0, plane_len / 2.0)),
+            right: rot.rotate_vector(Vec2f::new(0.0, -plane_len / 2.0)),
         }
     }
 }

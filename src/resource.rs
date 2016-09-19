@@ -6,8 +6,8 @@ static DEBUG_MAP: &'static str = {
        X......X
        X......X
        X..a...X
-       X....a.X
-       X.a....X
+       X....b.X
+       X.c....X
        X......X
        XXXXXXXX"#
 };
@@ -21,20 +21,18 @@ pub struct LevelMap {
 impl LevelMap {
     pub fn new() -> Self {
         let mut sectors = [[Sector::default(); 8]; 8];
-        let mut i = 0;
+        let mut x = 0;
+        let mut y = 7;
         for c in DEBUG_MAP.chars() {
-            let x = i % 8;
-            let y = i / 8;
-
             sectors[y][x] = match c {
-                'X' => Sector {
-                    floor_height: 16,
-                    texid: TextureID(1),
-                },
-
                 '.' => Sector {
                     floor_height: 0,
                     texid: TextureID(0),
+                },
+
+                'X' => Sector {
+                    floor_height: 1,
+                    texid: TextureID(1),
                 },
 
                 'a' => Sector {
@@ -42,10 +40,26 @@ impl LevelMap {
                     texid: TextureID(2),
                 },
 
+                'b' => Sector {
+                    floor_height: 1,
+                    texid: TextureID(3),
+                },
+
+                'c' => Sector {
+                    floor_height: 1,
+                    texid: TextureID(4),
+                },
+
+                '\n' => {
+                    x = 0;
+                    y -= 1;
+                    continue;
+                },
+
                 _ => continue,
             };
 
-            i += 1;
+            x += 1;
         }
 
         LevelMap {
