@@ -60,8 +60,8 @@ pub mod dda {
         use cgmath::prelude::*;
 
         let slope = dir.y / dir.x;
-        let first_x = (src.x / grid_size).floor() * grid_size;
-        let delta_x = dir.x.signum();
+        let first_x = ((src.x / grid_size).floor() + 1.0) * grid_size;
+        let delta_x = dir.x.signum() * grid_size;
         let delta_poi = Vec2f::new(delta_x, delta_x * slope);
         let delta_first = delta_poi * ((first_x - src.x) / delta_x);
 
@@ -89,8 +89,8 @@ pub mod dda {
             delta_poi: flip(h.delta_poi),
 
             normal: match h.normal {
-                Cardinal::East => Cardinal::South,
-                Cardinal::West => Cardinal::North,
+                Cardinal::East => Cardinal::North,
+                Cardinal::West => Cardinal::South,
                 _ => unreachable!(),
             },
         }
@@ -138,5 +138,28 @@ pub mod dda {
 
             Some(hit)
         }
+    }
+
+    #[test]
+    fn raycast_example() {
+        let sqrt2 = (2.0f32).sqrt();
+
+        let ray = Ray2f {
+            src: Vec2f::new(0.5, 0.5),
+            dir: Vec2f::new(sqrt2, sqrt2),
+        };
+
+        let wanted = vec![
+            Vec2f::new(2.0, 2.0),
+            Vec2f::new(2.0, 2.0),
+            Vec2f::new(4.0, 4.0),
+            Vec2f::new(4.0, 4.0),
+        ];
+
+        let got = ray.cast(2.0).take(4).map(|hit: RayHit| {
+            hit.poi
+        }).collect::<Vec<_>>();
+
+        assert_eq!(wanted, got);
     }
 }

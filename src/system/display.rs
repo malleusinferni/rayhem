@@ -105,10 +105,10 @@ impl System<Ctx> for DisplaySys {
         let player_xy = camera.pos.truncate();
 
         for (x, ray) in camera.scatter_rays() {
-            //let mut prev = match level.sector_to_draw(player_xy + ray.dir) {
-            //    Some(sector) => sector,
-            //    None => continue,
-            //};
+            let mut prev = match level.sector_to_draw(player_xy + ray.dir) {
+                Some(sector) => sector,
+                None => continue,
+            };
 
             for hit in ray.cast(level.grid_size) {
                 use geom::dda::RayHit;
@@ -117,9 +117,18 @@ impl System<Ctx> for DisplaySys {
 
                 if hit.toi > 1000.0 { break; }
 
-                let next: Sector = match level.sector_to_draw(&hit) {
-                    Some(sector) => sector,
-                    None => break,
+                let next: Sector = {
+                    let spot = hit.poi + match hit.normal {
+                        Cardinal::North => Vec2f::new(0.0, 0.5),
+                        Cardinal::South => Vec2f::new(0.0, -0.5),
+                        Cardinal::East => Vec2f::new(0.5, 0.0),
+                        Cardinal::West => Vec2f::new(-0.5, 0.0),
+                    };
+
+                    match level.sector_to_draw(spot) {
+                        Some(sector) => sector,
+                        None => break,
+                    }
                 };
 
                 if next.floor_height <= 0 { continue; }
@@ -250,20 +259,9 @@ impl Iterator for XRayIter {
     }
 }
 
-use geom::dda::RayHit;
-
 impl LevelMap {
     #[inline]
-    fn sector_to_draw(&self, hit: &RayHit) -> Option<Sector> {
-        let offset = match hit.normal {
-            Cardinal::North => Vec2f::new(0.0, 0.5),
-            Cardinal::South => Vec2f::new(0.0, -0.5),
-            Cardinal::East => Vec2f::new(0.5, 0.0),
-            Cardinal::West => Vec2f::new(-0.5, 0.0),
-        };
-
-        let poi: Vec2f = hit.poi + offset;
-
+    fn sector_to_draw(&self, poi: Vec2f) -> Option<Sector> {
         let coords: Vec2i = (poi / self.grid_size).cast();
         // FIXME: Subtract chunk root
 
