@@ -60,7 +60,13 @@ pub mod dda {
         use cgmath::prelude::*;
 
         let slope = dir.y / dir.x;
-        let first_x = ((src.x / grid_size).floor() + 1.0) * grid_size;
+
+        let first_x = {
+            let mut first = (src.x / grid_size).floor();
+            if dir.x > 0.0 { first += 1.0; }
+            first * grid_size
+        };
+
         let delta_x = dir.x.signum() * grid_size;
         let delta_poi = Vec2f::new(delta_x, delta_x * slope);
         let delta_first = delta_poi * ((first_x - src.x) / delta_x);
@@ -161,5 +167,23 @@ pub mod dda {
         }).collect::<Vec<_>>();
 
         assert_eq!(wanted, got);
+
+        let ray2 = Ray2f {
+            src: Vec2f::new(0.5, 0.5),
+            dir: Vec2f::new(-sqrt2, -sqrt2),
+        };
+
+        let wanted2 = vec![
+            Vec2f::new(0.0, 0.0),
+            Vec2f::new(0.0, 0.0),
+            Vec2f::new(-2.0, -2.0),
+            Vec2f::new(-2.0, -2.0),
+        ];
+
+        let got2 = ray2.cast(2.0).take(4).map(|hit: RayHit| {
+            hit.poi
+        }).collect::<Vec<_>>();
+
+        assert_eq!(wanted2, got2);
     }
 }
