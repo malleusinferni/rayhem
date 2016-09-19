@@ -102,10 +102,10 @@ impl System<Ctx> for DisplaySys {
             Err(_) => return,
         };
 
-        let player_xy = camera.pos.truncate();
+        let player_xy = camera.pos.truncate(); // Vec3f to Vec2f
 
         for (x, ray) in camera.scatter_rays() {
-            let mut prev = match level.sector_to_draw(player_xy + ray.dir) {
+            let mut prev = match level.sector_to_draw(player_xy) {
                 Some(sector) => sector,
                 None => continue,
             };
@@ -136,8 +136,10 @@ impl System<Ctx> for DisplaySys {
                 // FIXME: Correct projection
                 let z = hit.toi;
 
+                let elevation = next.floor_height as f32 * level.grid_size;
+
                 // Assume current floor height is 0
-                let wall_height = (next.floor_height as f32 / z) as i16;
+                let wall_height = (elevation / z) as i16;
 
                 manifest.walls.push(WallSlice {
                     texid: next.texid,
