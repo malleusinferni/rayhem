@@ -4,6 +4,8 @@ use engine::*;
 
 use component::*;
 
+use map::*;
+
 pub struct ApplyVelocity;
 
 impl System<Ctx> for ApplyVelocity {

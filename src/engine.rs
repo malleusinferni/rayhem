@@ -4,6 +4,7 @@ use specs::{self, Planner};
 use input::*;
 use movement::*;
 use display::*;
+use map::*;
 
 pub fn new<'r>() -> Engine<'r> {
     //if cfg!(target_os = "macos") {
@@ -28,7 +29,6 @@ pub fn new<'r>() -> Engine<'r> {
 
     let mut planner = {
         use component::*;
-        use map::*;
 
         let mut world = specs::World::new();
 

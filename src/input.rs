@@ -5,6 +5,8 @@ use specs::{Join, RunArg, System};
 use component::*;
 use engine::*;
 
+use map::*;
+
 pub struct MovePlayer;
 
 impl System<Ctx> for MovePlayer {

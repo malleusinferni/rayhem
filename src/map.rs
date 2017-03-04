@@ -1,5 +1,17 @@
+use specs::*;
+
 use geom::*;
 use component::TextureID;
+
+#[derive(Clone, Debug)]
+pub struct Pos3D(pub Vec3f, pub Radf);
+
+#[derive(Clone, Debug)]
+pub struct Vel3D(pub Vec3f);
+
+impl Component for Pos3D { type Storage = VecStorage<Pos3D>; }
+
+impl Component for Vel3D { type Storage = VecStorage<Vel3D>; }
 
 static DEBUG_MAP: &'static str = {
     r#"XXXXXXXX
@@ -92,5 +104,19 @@ impl Default for Sector {
             floor_height: 0,
             texid: TextureID::default(),
         }
+    }
+}
+
+impl Pos3D {
+    pub fn new(x: f32, y: f32, z: f32, deg: f32) -> Self {
+        let pos = Vec3f::new(x, y, z);
+        let yaw = Rad(deg.to_radians());
+        Pos3D(pos, yaw)
+    }
+}
+
+impl Vel3D {
+    pub fn new() -> Self {
+        Vel3D(Vec3f::new(0.0, 0.0, 0.0))
     }
 }
