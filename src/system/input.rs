@@ -16,7 +16,7 @@ impl System<Ctx> for MovePlayer {
         });
 
         for (_, pos, vel) in (&player, &mut pos, &mut vel).iter() {
-            let turn_speed = Radf::new(ctx.turn_amount * ctx.dt as f32);
+            let turn_speed = Rad(ctx.turn_amount * ctx.dt as f32);
 
             pos.1 -= turn_speed;
             pos.1 = pos.1.normalize();

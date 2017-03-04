@@ -107,8 +107,8 @@ impl Camera3D {
         Camera3D {
             dim: dim,
             pos: Vec3f::new(0.0, 0.0, 0.0),
-            yaw: Radf::new(0.0),
-            pitch: Radf::new(0.0),
+            yaw: Rad(0.0),
+            pitch: Rad(0.0),
         }
     }
 }

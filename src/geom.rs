@@ -20,6 +20,8 @@ pub type Rot2f = cgmath::Basis2<f32>;
 
 pub type Radf = cgmath::Rad<f32>;
 
+pub use cgmath::Rad;
+
 #[derive(Copy, Clone)]
 pub enum Cardinal {
     North,
