@@ -2,7 +2,6 @@ use sdl2::{self, Sdl, EventPump};
 use specs::{self, Planner};
 
 use input::*;
-use camera::*;
 use movement::*;
 use display::*;
 
