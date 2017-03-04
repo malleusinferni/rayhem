@@ -1,7 +1,8 @@
 use specs::*;
 
 use geom::*;
-use component::TextureID;
+
+use display::TextureID;
 
 #[derive(Clone, Debug)]
 pub struct Pos3D(pub Vec3f, pub Radf);

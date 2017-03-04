@@ -5,7 +5,7 @@ use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::{Renderer, Texture};
 
-use specs::{Join, RunArg, System};
+use specs::{Component, HashMapStorage, Join, RunArg, System, VecStorage};
 
 use engine::Ctx;
 
@@ -19,6 +19,26 @@ pub struct Camera3D {
     pub yaw: Radf,
     pub pitch: Radf,
 }
+
+#[derive(Clone, Debug)]
+pub struct Sprite3D {
+    // Empty for now
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct Billboard {
+    pub dst_pos: Vec2i,
+    pub src_pos: Vec2i,
+    pub size: Vec2u,
+    pub depth: f32,
+    pub texid: TextureID,
+}
+
+impl Component for Sprite3D { type Storage = VecStorage<Sprite3D>; }
+impl Component for Billboard { type Storage = HashMapStorage<Billboard>; }
+
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub struct TextureID(pub u8);
 
 struct DisplayList {
     bg: Color,
@@ -252,6 +272,12 @@ impl Billboard {
         let (w, h) = self.size.into();
         let y = camera_y - (y + h as i32);
         Rect::new(x, y, w, h)
+    }
+}
+
+impl Default for TextureID {
+    fn default() -> Self {
+        TextureID(0)
     }
 }
 
