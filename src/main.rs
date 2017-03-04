@@ -10,9 +10,9 @@ pub mod input;
 pub mod camera;
 pub mod movement;
 pub mod display;
+pub mod map;
 
 pub mod component;
-pub mod resource;
 
 fn main() {
     let mut engine = engine::new();

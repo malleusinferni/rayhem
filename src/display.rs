@@ -10,7 +10,9 @@ use specs::{Join, RunArg, System};
 use engine::Ctx;
 
 use component::*;
-use resource::*;
+
+use camera::*;
+use map::*;
 
 struct DisplayList {
     bg: Color,

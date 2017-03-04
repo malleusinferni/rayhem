@@ -94,21 +94,3 @@ impl Default for Sector {
         }
     }
 }
-
-pub struct Camera3D {
-    pub pos: Vec3f,
-    pub dim: Vec2u,
-    pub yaw: Radf,
-    pub pitch: Radf,
-}
-
-impl Camera3D {
-    pub fn new(dim: Vec2u) -> Self {
-        Camera3D {
-            dim: dim,
-            pos: Vec3f::new(0.0, 0.0, 0.0),
-            yaw: Rad(0.0),
-            pitch: Rad(0.0),
-        }
-    }
-}

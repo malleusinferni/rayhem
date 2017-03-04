@@ -29,7 +29,7 @@ pub fn new<'r>() -> Engine<'r> {
 
     let mut planner = {
         use component::*;
-        use resource::*;
+        use map::*;
 
         let mut world = specs::World::new();
 
