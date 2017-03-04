@@ -1,11 +1,11 @@
 use std::collections::HashMap;
-use std::sync::mpsc::{self, Sender, Receiver};
 
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::{Renderer, Texture};
 
 use specs::{Component, HashMapStorage, Join, RunArg, System, VecStorage};
+use specs::{Planner, World};
 
 use engine::Ctx;
 
@@ -58,70 +58,59 @@ struct WallSlice {
 pub struct MoveCamera;
 
 pub struct DisplaySys {
-    inbox: Receiver<DisplayList>,
-    outbox: Sender<DisplayList>,
     resolution: Vec2u,
 }
 
 pub struct DisplayAgent<'r> {
-    inbox: Receiver<DisplayList>,
-    outbox: Sender<DisplayList>,
     textures: HashMap<TextureID, Color>,
     renderer: Renderer<'r>,
     resolution: Vec2u,
 }
 
-impl DisplaySys {
-    pub fn new<'r>(mut renderer: Renderer<'r>) -> (DisplayAgent<'r>, Self) {
-        let (agent_out, sys_in) = mpsc::channel();
-        let (sys_out, agent_in) = mpsc::channel();
+pub fn init<'r>(planner: &mut Planner<Ctx>, mut renderer: Renderer<'r>) -> DisplayAgent<'r> {
+    let (width, height) = renderer.window().unwrap().size();
 
-        let (width, height) = renderer.window().unwrap().size();
+    let desired_res = {
+        let divisor = gcd(width, height);
 
-        let desired_res = {
-            let divisor = gcd(width, height);
-
-            // TODO: Try multiplying different factors together
-            // and dividing the original resolution by the result
-            // until you get an area within the desired range
-            Vec2u::from(match (width / divisor, height / divisor) {
-                (16, 9) => (400, 225),
-                (8, 5) => (720, 450),
-                (4, 3) => (320, 240),
-                _ => unimplemented!(),
-            })
-        };
-
-        renderer.set_logical_size(desired_res.x, desired_res.y)
-            .unwrap();
-
-        println!("Using resolution: {:?}", desired_res);
-
-        let mut textures = HashMap::new();
-        textures.insert(TextureID(0), Color::RGB(0x00, 0x00, 0x00));
-        textures.insert(TextureID(1), Color::RGB(0x7f, 0x3f, 0x1f));
-        textures.insert(TextureID(2), Color::RGB(0x00, 0xbf, 0x1f));
-        textures.insert(TextureID(3), Color::RGB(0xbf, 0xbf, 0x1f));
-        textures.insert(TextureID(4), Color::RGB(0xbf, 0xbf, 0xbf));
-
-        let agent = DisplayAgent {
-            inbox: agent_in,
-            outbox: agent_out,
-            renderer: renderer,
-            textures: textures,
-            resolution: desired_res,
-        };
-
-        for _ in 0 .. 2 {
-            agent.outbox.send(DisplayList::new(desired_res)).unwrap();
-        }
-
-        (agent, DisplaySys {
-            inbox: sys_in,
-            outbox: sys_out,
-            resolution: desired_res,
+        // TODO: Try multiplying different factors together
+        // and dividing the original resolution by the result
+        // until you get an area within the desired range
+        Vec2u::from(match (width / divisor, height / divisor) {
+            (16, 9) => (400, 225),
+            (8, 5) => (720, 450),
+            (4, 3) => (320, 240),
+            _ => unimplemented!(),
         })
-    }
+    };
+
+    renderer.set_logical_size(desired_res.x, desired_res.y)
+        .unwrap();
+
+    println!("Using resolution: {:?}", desired_res);
+
+    let mut textures = HashMap::new();
+    textures.insert(TextureID(0), Color::RGB(0x00, 0x00, 0x00));
+    textures.insert(TextureID(1), Color::RGB(0x7f, 0x3f, 0x1f));
+    textures.insert(TextureID(2), Color::RGB(0x00, 0xbf, 0x1f));
+    textures.insert(TextureID(3), Color::RGB(0xbf, 0xbf, 0x1f));
+    textures.insert(TextureID(4), Color::RGB(0xbf, 0xbf, 0xbf));
+
+    let agent = DisplayAgent {
+        renderer: renderer,
+        textures: textures,
+        resolution: desired_res,
+    };
+
+    let display_sys = DisplaySys {
+        resolution: desired_res,
+    };
+
+    planner.add_system(display_sys, "Display", 1);
+
+    planner.mut_world().add_resource(DisplayList::new(desired_res));
+
+    agent
 }
 
 impl System<Ctx> for MoveCamera {
@@ -143,16 +132,12 @@ impl System<Ctx> for MoveCamera {
 
 impl System<Ctx> for DisplaySys {
     fn run(&mut self, arg: RunArg, _ctx: Ctx) {
-        let (billboards, camera, level) = arg.fetch(|world| {
-            (world.read::<Billboard>(),
+        let (mut manifest, billboards, camera, level) = arg.fetch(|world| {
+            (world.write_resource::<DisplayList>(),
+            world.read::<Billboard>(),
             world.read_resource::<Camera3D>(),
             world.read_resource::<LevelMap>())
         });
-
-        let mut manifest: DisplayList = match self.inbox.try_recv() {
-            Ok(m) => m,
-            Err(_) => return,
-        };
 
         let player_xy = camera.pos.truncate(); // Vec3f to Vec2f
 
@@ -205,17 +190,12 @@ impl System<Ctx> for DisplaySys {
                 break;
             }
         }
-
-        let _ = self.outbox.send(manifest).map_err(|e| println!("{}", e));
     }
 }
 
 impl<'r> DisplayAgent<'r> {
-    pub fn draw(&mut self) {
-        let mut manifest: DisplayList = match self.inbox.recv() {
-            Ok(m) => m,
-            Err(_) => return,
-        };
+    pub fn draw(&mut self, world: &mut World) {
+        let mut manifest = world.write_resource::<DisplayList>();
 
         //manifest.billboards.sort_by_key(|b| b.dst_pos.x);
 
@@ -248,8 +228,6 @@ impl<'r> DisplayAgent<'r> {
         //}
 
         self.renderer.present();
-
-        let _ = self.outbox.send(manifest).map_err(|e| println!("{}", e));
     }
 }
 

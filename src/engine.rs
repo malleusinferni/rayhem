@@ -52,12 +52,11 @@ pub fn new<'r>() -> Engine<'r> {
 
     let event_pump = sdl.event_pump().unwrap();
 
-    let (display_agent, display_sys) = DisplaySys::new(renderer);
+    let display_agent = ::display::init(&mut planner, renderer);
 
     planner.add_system(MovePlayer{}, "Input", 4);
     planner.add_system(ApplyVelocity{}, "Movement", 3);
     planner.add_system(MoveCamera{}, "Camera", 2);
-    planner.add_system(display_sys, "Display", 1);
 
     let ctx = Ctx::new();
 
@@ -158,7 +157,7 @@ impl<'r> Engine<'r> {
         while !self.ctx.should_quit {
             self.ctx.update(&mut self.event_pump);
             self.planner.dispatch(self.ctx.clone());
-            self.display.draw();
+            self.display.draw(self.planner.mut_world());
         }
     }
 }
