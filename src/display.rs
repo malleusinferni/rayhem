@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use sdl2::render::{Renderer, Texture};
+use sdl2::render::Renderer;
 
 use specs::{Component, HashMapStorage, Join, RunArg, System, VecStorage};
 use specs::{Planner, World};
@@ -56,10 +56,7 @@ struct WallSlice {
 }
 
 pub struct MoveCamera;
-
-pub struct Draw {
-    resolution: Vec2u,
-}
+pub struct Draw;
 
 pub struct Handler<'r> {
     textures: HashMap<TextureID, Color>,
@@ -102,12 +99,8 @@ pub fn init<'r>(planner: &mut Planner<Ctx>, mut renderer: Renderer<'r>) -> Handl
         resolution: desired_res,
     };
 
-    let draw = Draw {
-        resolution: desired_res,
-    };
-
-    planner.add_system(MoveCamera{}, "display::MoveCamera", 2);
-    planner.add_system(draw, "display::Draw", 1);
+    planner.add_system(MoveCamera, "display::MoveCamera", 2);
+    planner.add_system(Draw, "display::Draw", 1);
 
     let world = planner.mut_world();
     world.register::<Sprite3D>();
@@ -119,7 +112,7 @@ pub fn init<'r>(planner: &mut Planner<Ctx>, mut renderer: Renderer<'r>) -> Handl
 }
 
 impl System<Ctx> for MoveCamera {
-    fn run(&mut self, arg: RunArg, ctx: Ctx) {
+    fn run(&mut self, arg: RunArg, _ctx: Ctx) {
         let (mut camera, pos, player) = arg.fetch(|world| {
             (world.write_resource::<Camera3D>(),
             world.read::<Pos3D>(),
@@ -137,9 +130,8 @@ impl System<Ctx> for MoveCamera {
 
 impl System<Ctx> for Draw {
     fn run(&mut self, arg: RunArg, _ctx: Ctx) {
-        let (mut manifest, billboards, camera, level) = arg.fetch(|world| {
+        let (mut manifest, camera, level) = arg.fetch(|world| {
             (world.write_resource::<DisplayList>(),
-            world.read::<Billboard>(),
             world.read_resource::<Camera3D>(),
             world.read_resource::<LevelMap>())
         });
@@ -149,7 +141,7 @@ impl System<Ctx> for Draw {
         let hf = camera.dim.y as f32 / 8.0;
 
         for (x, ray) in camera.scatter_rays() {
-            let mut prev = match level.sector_to_draw(player_xy) {
+            let prev = match level.sector_to_draw(player_xy) {
                 Some(sector) => sector,
                 None => continue,
             };

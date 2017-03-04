@@ -2,8 +2,6 @@ use specs::{Join, RunArg, System};
 
 use engine::*;
 
-use geom::*;
-
 use map::*;
 
 use specs::{Component, NullStorage};
@@ -22,7 +20,7 @@ impl Component for IsPlayer { type Storage = NullStorage<IsPlayer>; }
 pub struct ApplyVelocity;
 
 impl System<Ctx> for ApplyVelocity {
-    fn run(&mut self, arg: RunArg, ctx: Ctx) {
+    fn run(&mut self, arg: RunArg, _ctx: Ctx) {
         let (mut pos, mut vel) = arg.fetch(|world| {
             (world.write::<Pos3D>(), world.write::<Vel3D>())
         });

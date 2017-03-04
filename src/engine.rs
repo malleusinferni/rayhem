@@ -1,8 +1,6 @@
 use sdl2::{self, Sdl, EventPump};
 use specs::{self, Planner};
 
-use geom::*;
-
 use display;
 
 use input::*;
@@ -10,10 +8,6 @@ use movement::*;
 use map::*;
 
 pub fn new<'r>() -> Engine<'r> {
-    //if cfg!(target_os = "macos") {
-    //    sdl2::hint::set("SDL_VIDEO_MAC_FULLSCREEN_SPACES", "0");
-    //}
-
     let sdl = sdl2::init().unwrap();
 
     let window = sdl.video().unwrap()
@@ -120,16 +114,6 @@ impl Ctx {
         use sdl2::keyboard::Scancode;
 
         let kb = event_pump.keyboard_state();
-
-        //self.turning = {
-        //    let left = kb.is_scancode_pressed(Scancode::Left);
-        //    let right = kb.is_scancode_pressed(Scancode::Right);
-        //    match (left, right) {
-        //        (true, false) => Turning::Left,
-        //        (false, true) => Turning::Right,
-        //        _ => Turning::Straight,
-        //    }
-        //};
 
         self.walking = kb.is_scancode_pressed(Scancode::W);
 
