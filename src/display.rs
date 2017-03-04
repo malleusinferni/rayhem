@@ -57,17 +57,17 @@ struct WallSlice {
 
 pub struct MoveCamera;
 
-pub struct DisplaySys {
+pub struct Draw {
     resolution: Vec2u,
 }
 
-pub struct DisplayAgent<'r> {
+pub struct Handler<'r> {
     textures: HashMap<TextureID, Color>,
     renderer: Renderer<'r>,
     resolution: Vec2u,
 }
 
-pub fn init<'r>(planner: &mut Planner<Ctx>, mut renderer: Renderer<'r>) -> DisplayAgent<'r> {
+pub fn init<'r>(planner: &mut Planner<Ctx>, mut renderer: Renderer<'r>) -> Handler<'r> {
     let (width, height) = renderer.window().unwrap().size();
 
     let desired_res = {
@@ -96,21 +96,26 @@ pub fn init<'r>(planner: &mut Planner<Ctx>, mut renderer: Renderer<'r>) -> Displ
     textures.insert(TextureID(3), Color::RGB(0xbf, 0xbf, 0x1f));
     textures.insert(TextureID(4), Color::RGB(0xbf, 0xbf, 0xbf));
 
-    let agent = DisplayAgent {
+    let handler = Handler {
         renderer: renderer,
         textures: textures,
         resolution: desired_res,
     };
 
-    let display_sys = DisplaySys {
+    let draw = Draw {
         resolution: desired_res,
     };
 
-    planner.add_system(display_sys, "Display", 1);
+    planner.add_system(MoveCamera{}, "display::MoveCamera", 2);
+    planner.add_system(draw, "display::Draw", 1);
 
-    planner.mut_world().add_resource(DisplayList::new(desired_res));
+    let world = planner.mut_world();
+    world.register::<Sprite3D>();
+    world.register::<Billboard>();
+    world.add_resource(Camera3D::new(desired_res));
+    world.add_resource(DisplayList::new(desired_res));
 
-    agent
+    handler
 }
 
 impl System<Ctx> for MoveCamera {
@@ -130,7 +135,7 @@ impl System<Ctx> for MoveCamera {
     }
 }
 
-impl System<Ctx> for DisplaySys {
+impl System<Ctx> for Draw {
     fn run(&mut self, arg: RunArg, _ctx: Ctx) {
         let (mut manifest, billboards, camera, level) = arg.fetch(|world| {
             (world.write_resource::<DisplayList>(),
@@ -193,7 +198,7 @@ impl System<Ctx> for DisplaySys {
     }
 }
 
-impl<'r> DisplayAgent<'r> {
+impl<'r> Handler<'r> {
     pub fn draw(&mut self, world: &mut World) {
         let mut manifest = world.write_resource::<DisplayList>();
 

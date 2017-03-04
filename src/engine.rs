@@ -3,9 +3,10 @@ use specs::{self, Planner};
 
 use geom::*;
 
+use display;
+
 use input::*;
 use movement::*;
-use display::*;
 use map::*;
 
 pub fn new<'r>() -> Engine<'r> {
@@ -34,11 +35,8 @@ pub fn new<'r>() -> Engine<'r> {
 
         world.register::<Pos3D>();
         world.register::<Vel3D>();
-        world.register::<Sprite3D>();
-        world.register::<Billboard>();
         world.register::<IsPlayer>();
 
-        world.add_resource(Camera3D::new(Vec2u::new(640, 480)));
         world.add_resource(LevelMap::new());
 
         world.create_now()
@@ -52,11 +50,10 @@ pub fn new<'r>() -> Engine<'r> {
 
     let event_pump = sdl.event_pump().unwrap();
 
-    let display_agent = ::display::init(&mut planner, renderer);
+    let display_handler = ::display::init(&mut planner, renderer);
 
     planner.add_system(MovePlayer{}, "Input", 4);
     planner.add_system(ApplyVelocity{}, "Movement", 3);
-    planner.add_system(MoveCamera{}, "Camera", 2);
 
     let ctx = Ctx::new();
 
@@ -65,7 +62,7 @@ pub fn new<'r>() -> Engine<'r> {
         ctx: ctx,
         event_pump: event_pump,
         planner: planner,
-        display: display_agent,
+        display: display_handler,
     }
 }
 
@@ -149,7 +146,7 @@ pub struct Engine<'r> {
     ctx: Ctx,
     event_pump: EventPump,
     planner: Planner<Ctx>,
-    display: DisplayAgent<'r>,
+    display: display::Handler<'r>,
 }
 
 impl<'r> Engine<'r> {
