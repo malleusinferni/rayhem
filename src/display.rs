@@ -9,7 +9,9 @@ use specs::{Component, HashMapStorage, Join, RunArg, System, VecStorage};
 
 use engine::Ctx;
 
-use component::*;
+use geom::*;
+
+use movement::*;
 
 use map::*;
 

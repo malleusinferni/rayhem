@@ -2,10 +2,13 @@ use cgmath::Angle;
 
 use specs::{Join, RunArg, System};
 
-use component::*;
+use geom::*;
+
 use engine::*;
 
 use map::*;
+
+use movement::*;
 
 pub struct MovePlayer;
 

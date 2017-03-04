@@ -1,6 +1,8 @@
 use sdl2::{self, Sdl, EventPump};
 use specs::{self, Planner};
 
+use geom::*;
+
 use input::*;
 use movement::*;
 use display::*;
@@ -28,8 +30,6 @@ pub fn new<'r>() -> Engine<'r> {
         .unwrap();
 
     let mut planner = {
-        use component::*;
-
         let mut world = specs::World::new();
 
         world.register::<Pos3D>();

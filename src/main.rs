@@ -11,8 +11,6 @@ pub mod movement;
 pub mod display;
 pub mod map;
 
-pub mod component;
-
 fn main() {
     let mut engine = engine::new();
     engine.run();
