@@ -6,9 +6,13 @@ extern crate time;
 
 pub mod geom;
 pub mod engine;
+pub mod input;
+pub mod camera;
+pub mod movement;
+pub mod display;
+
 pub mod component;
 pub mod resource;
-pub mod system;
 
 fn main() {
     let mut engine = engine::new();

@@ -1,7 +1,10 @@
 use sdl2::{self, Sdl, EventPump};
 use specs::{self, Planner};
 
-use system::*;
+use input::*;
+use camera::*;
+use movement::*;
+use display::*;
 
 pub fn new<'r>() -> Engine<'r> {
     //if cfg!(target_os = "macos") {
